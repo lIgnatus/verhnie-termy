@@ -1,0 +1,278 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Верхние Термы</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="description" content="Прототип сайта школы развития сельских территорий в Верхних Термах: модель участка и облако смыслов.">
+<style>
+/*FONTS*/
+/* Интерфейс поверх 3D: тёмная хвоя панелей и цветные кирпичи цоколя школы.
+   Нижняя панель сложена как кирпичная кладка: ряд остановок и сдвинутый ряд слоёв. */
+:root {
+  --ink: #13212a;
+  --ink-2: #1e313a;
+  --paper: #f3ead8;
+  --muted: #aebdbb;
+  --line: rgba(243, 234, 216, 0.14);
+  --teal: #4f9c8e; --sky: #5f8fc4; --clay: #c35f45; --ochre: #d8b250; --leaf: #7fb069; --chalk: #f2efe7;
+  --f-display: "Vollkorn", Georgia, "Times New Roman", serif;
+  --f-body: "Golos Text", "Segoe UI", Roboto, system-ui, sans-serif;
+  --panel-w: 384px;
+  color-scheme: dark;
+}
+[hidden] { display: none !important; }
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; background: #1b2a31; color: var(--paper); font: 15px/1.5 var(--f-body); overflow: hidden; -webkit-font-smoothing: antialiased; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--ochre); outline-offset: 2px; }
+#view { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+.vignette { position: fixed; inset: 0; z-index: 7; pointer-events: none; background: radial-gradient(ellipse at 50% 46%, rgba(0, 0, 0, 0) 58%, rgba(30, 20, 10, 0.28) 100%); }
+
+/* Шапка */
+.top { position: fixed; top: 0; left: 0; right: 0; z-index: 20; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: max(14px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px)); pointer-events: none; }
+.top > * { pointer-events: auto; }
+.left { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.mark { background: rgba(19, 33, 42, 0.82); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); padding: 8px 14px 10px; border-radius: 2px; border: 1px solid var(--line); }
+.mark-name { display: block; font: 700 25px/1.05 var(--f-display); letter-spacing: 0.01em; }
+.mark-sub { display: block; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-top: 3px; }
+.crumbs { display: flex; align-items: center; gap: 4px; background: rgba(19, 33, 42, 0.72); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); padding: 3px 6px; border-radius: 2px; font-size: 12.5px; }
+.crumbs button { background: none; border: 0; padding: 3px 6px; color: var(--muted); cursor: pointer; border-radius: 2px; }
+.crumbs button.on { color: var(--paper); font-weight: 600; }
+.crumbs button:hover { background: rgba(255, 255, 255, 0.07); }
+.crumbs span { color: rgba(243, 234, 216, 0.35); }
+.right { display: flex; gap: 3px; }
+.ghost { white-space: nowrap; background: rgba(19, 33, 42, 0.82); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid var(--line); border-radius: 2px; padding: 8px 14px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.ghost:hover { background: var(--ink-2); }
+.geo { position: fixed; left: max(16px, env(safe-area-inset-left, 0px)); bottom: calc(108px + env(safe-area-inset-bottom, 0px)); z-index: 10; font-size: 11.5px; color: rgba(243, 234, 216, 0.82); text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6); font-variant-numeric: tabular-nums; pointer-events: none; }
+[data-mode="meaning"] .geo, [data-mode="graph"] .geo { opacity: 0; }
+
+/* Подписи на модели */
+#labels { position: fixed; inset: 0; z-index: 8; pointer-events: none; overflow: hidden; }
+.pin { position: absolute; left: 0; top: 0; width: 0; height: 0; padding: 0; border: 0; background: none; cursor: pointer; opacity: 0; pointer-events: none; transition: opacity 0.25s; will-change: transform; }
+.pin.on { opacity: 1; pointer-events: auto; }
+.pin-dot { position: absolute; left: -5px; top: -5px; width: 10px; height: 10px; border-radius: 50%; background: var(--paper); box-shadow: 0 0 0 3px rgba(19, 33, 42, 0.55); }
+.pin-text { position: absolute; left: 0; bottom: 14px; transform: translateX(-50%); white-space: nowrap; background: rgba(19, 33, 42, 0.86); border: 1px solid var(--line); padding: 3px 9px 4px; border-radius: 2px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.01em; }
+.pin-text::after { content: ""; position: absolute; left: 50%; top: 100%; width: 1px; height: 9px; background: rgba(243, 234, 216, 0.7); }
+.pin:hover .pin-text, .pin:focus-visible .pin-text { background: var(--paper); color: var(--ink); }
+.pin-tura .pin-dot { background: #c9c0ff; }
+.pin-area .pin-dot { background: var(--ochre); }
+.pin-room .pin-dot { background: var(--ochre); }
+.pin-room .pin-text { background: rgba(216, 178, 80, 0.94); color: var(--ink); border-color: transparent; }
+.petal-label { position: absolute; left: 0; top: 0; width: 230px; margin: -30px 0 0 -115px; display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; background: none; border: 0; cursor: pointer; opacity: 0; pointer-events: none; transition: opacity 0.5s; padding: 6px; }
+.petal-label.on { opacity: 1; pointer-events: auto; }
+.pl-title { font: 700 22px/1.1 var(--f-display); color: #fff; text-shadow: 0 2px 10px rgba(8, 10, 40, 0.9), 0 0 2px rgba(8, 10, 40, 0.9); text-wrap: balance; }
+.pl-lead { font-size: 12.5px; line-height: 1.35; color: #e7e2ff; text-shadow: 0 1px 6px rgba(8, 10, 40, 0.95); max-width: 210px; opacity: 0; transform: translateY(-4px); transition: 0.25s; }
+.petal-label:hover .pl-lead, .petal-label:focus-visible .pl-lead { opacity: 1; transform: none; }
+.petal-label::before { content: ""; width: 34px; height: 5px; background: var(--c, var(--ochre)); border-radius: 1px; margin-bottom: 5px; box-shadow: 0 0 12px var(--c, var(--ochre)); }
+.core-label { width: 250px; margin-left: -125px; }
+.core-label .pl-title { font-size: 19px; }
+.core-label::before { background: #f2c14e; }
+.cloud-cta { position: absolute; left: 0; top: 0; width: 200px; margin: -24px 0 0 -100px; display: flex; flex-direction: column; align-items: center; background: none; border: 0; cursor: pointer; opacity: 0; pointer-events: none; transition: opacity 0.4s; }
+.cloud-cta.on { opacity: 1; pointer-events: auto; }
+.cloud-cta span { font: 700 21px/1.1 var(--f-display); color: #fff; text-shadow: 0 2px 12px rgba(40, 20, 60, 0.75), 0 0 3px rgba(40, 20, 60, 0.6); }
+.cloud-cta small { font-size: 12px; color: #fff; opacity: 0.9; text-shadow: 0 1px 6px rgba(40, 20, 60, 0.8); }
+.cloud-cta:hover span { text-decoration: underline; text-underline-offset: 4px; }
+
+/* Граф */
+#graph { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 9; opacity: 0; pointer-events: none; transition: opacity 0.5s; }
+#graph.show { opacity: 1; pointer-events: auto; }
+.g-link { stroke-width: 1.3; opacity: 0.5; transition: opacity 0.2s; }
+.g-link.cross { stroke-dasharray: 3 4; opacity: 0.35; }
+.g-link.on { opacity: 0.95; stroke-width: 2.2; }
+.g-link.dim { opacity: 0.07; }
+.g-node { cursor: pointer; transition: opacity 0.2s; }
+.g-node .dot { stroke: rgba(8, 10, 30, 0.7); stroke-width: 1.5; }
+.g-node .ring { fill: none; stroke-width: 1.6; opacity: 0.85; }
+.g-node .halo { fill: rgba(255, 255, 255, 0); transition: fill 0.2s; }
+.g-node.sel .halo, .g-node:hover .halo { fill: rgba(255, 255, 255, 0.14); }
+.st-plan .ring { stroke-dasharray: 4 3; }
+.st-idea .ring { stroke-dasharray: 1.5 3.5; }
+.st-work .ring { stroke-dasharray: 8 3; }
+.st-check .ring { stroke: #ff8d6a !important; stroke-dasharray: 5 3; opacity: 1; }
+.g-label { fill: #f1edff; font: 500 12.5px var(--f-body); paint-order: stroke; stroke: rgba(10, 12, 40, 0.92); stroke-width: 3.5px; stroke-linejoin: round; pointer-events: none; }
+.g-node.core .g-label { font: 700 15px var(--f-display); }
+.g-node.outer .g-label { font-size: 11px; opacity: 0.75; }
+.g-node.dim { opacity: 0.16; }
+#graph.g-all .g-node:not(.big):not(.lit):not(.sel):not(.core) .g-label { display: none; }
+#graph:not(.g-all) .g-node.outer:not(.lit):not(.sel) .g-label { display: none; }
+
+/* Карточка */
+.panel { position: fixed; z-index: 15; top: 84px; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(108px + env(safe-area-inset-bottom, 0px)); width: var(--panel-w); max-width: calc(100vw - 32px); background: rgba(19, 33, 42, 0.92); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 3px; transform: translateX(calc(100% + 40px)); transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1); display: flex; flex-direction: column; }
+.panel-open .panel { transform: none; }
+#panel-close { position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; border: 0; background: rgba(255, 255, 255, 0.06); border-radius: 2px; cursor: pointer; font-size: 18px; line-height: 1; z-index: 2; }
+#panel-close:hover { background: rgba(255, 255, 255, 0.14); }
+#panel-body > * { flex-shrink: 0; }
+#panel-body { overflow: auto; padding: 18px 20px 22px; display: flex; flex-direction: column; gap: 12px; }
+#panel-body h2 { font: 600 28px/1.12 var(--f-display); margin: 0; padding-right: 30px; text-wrap: balance; }
+#panel-body p { margin: 0; max-width: 62ch; }
+#panel-body p.lead { font-size: 16.5px; color: var(--paper); }
+#panel-body h4 { margin: 0 0 6px; font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.eyebrow { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-height: 22px; padding-right: 36px; }
+.st { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 8px; border-radius: 2px; color: var(--ink); }
+.st-fact { background: #8cc275; } .st-work { background: #e8bb55; } .st-plan { background: #7dbfe3; } .st-idea { background: #e3b0cd; } .st-check { background: #f0896b; }
+.eyebrow .st { color: var(--ink); }
+.tag { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+.tag i { width: 10px; height: 6px; border-radius: 1px; background: var(--c, var(--ochre)); }
+.card-img { margin: 0; }
+.card-img img { width: 100%; height: auto; display: block; border-radius: 2px; aspect-ratio: 16 / 8; object-fit: cover; }
+.card-img figcaption { font-size: 11.5px; color: var(--muted); margin-top: 4px; }
+.facts { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; margin: 0; background: var(--line); border: 1px solid var(--line); border-radius: 2px; overflow: hidden; }
+.facts div { background: rgba(19, 33, 42, 0.95); padding: 7px 10px; min-width: 0; }
+.facts dt { font-size: 11px; color: var(--muted); }
+.facts dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+.links { display: flex; flex-wrap: wrap; gap: 5px; }
+.links h4 { width: 100%; }
+.chip { display: inline-flex; align-items: center; gap: 7px; padding: 5px 10px 6px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.035); border-radius: 2px; font-size: 13px; cursor: pointer; text-align: left; }
+.chip i { width: 9px; height: 6px; border-radius: 1px; background: var(--c); flex: none; }
+.chip:hover { background: rgba(255, 255, 255, 0.1); border-color: rgba(243, 234, 216, 0.3); }
+.act { width: 100%; padding: 11px 14px; border: 0; border-radius: 2px; background: var(--ochre); color: var(--ink); font-weight: 700; cursor: pointer; text-align: left; box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.18); }
+.act:hover { background: #e6c368; }
+.src { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; border-top: 1px solid var(--line); padding-top: 10px; }
+.src a { color: var(--paper); text-decoration-color: rgba(243, 234, 216, 0.35); text-underline-offset: 3px; overflow-wrap: anywhere; }
+.src span { color: var(--muted); }
+.note { font-size: 12.5px; color: var(--muted); }
+.years { display: flex; flex-direction: column; gap: 6px; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--line); border-radius: 2px; padding: 10px 12px; }
+.years label { font-size: 13.5px; }
+.years input { width: 100%; accent-color: var(--ochre); }
+.ticks { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.years ol { margin: 4px 0 0; padding: 0; list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 2px 10px; font-size: 12px; color: rgba(243, 234, 216, 0.4); font-variant-numeric: tabular-nums; }
+.years li.on { color: var(--paper); }
+
+/* Кладка внизу */
+.dock { position: fixed; z-index: 16; left: 50%; bottom: max(14px, env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); display: flex; flex-direction: column; gap: 3px; max-width: calc(100vw - 32px); }
+.course { display: flex; gap: 3px; overflow-x: auto; scrollbar-width: none; padding-top: 3px; }
+.course::-webkit-scrollbar { display: none; }
+.course.offset { padding-left: 42px; }
+.brick { flex: 0 0 auto; height: 36px; padding: 0 15px; border: 0; border-radius: 2px; font-size: 13px; font-weight: 600; background: rgba(19, 33, 42, 0.88); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.06); cursor: pointer; transition: transform 0.18s, background 0.18s; white-space: nowrap; }
+.brick:hover { transform: translateY(-2px); background: rgba(36, 55, 64, 0.96); }
+.brick.on { background: var(--paper); color: var(--ink); }
+#stops .brick:not(.brick-cloud):not(.brick-back):not(.brick-petal) { border-top: 3px solid var(--k, var(--teal)); }
+#stops .brick:nth-child(8n+1) { --k: var(--teal); } #stops .brick:nth-child(8n+2) { --k: var(--sky); } #stops .brick:nth-child(8n+3) { --k: var(--clay); } #stops .brick:nth-child(8n+4) { --k: var(--ochre); }
+#stops .brick:nth-child(8n+5) { --k: var(--leaf); } #stops .brick:nth-child(8n+6) { --k: var(--chalk); } #stops .brick:nth-child(8n+7) { --k: var(--teal); } #stops .brick:nth-child(8n+8) { --k: var(--sky); }
+.brick-cloud { background: linear-gradient(100deg, #6aa84f, #d9a92b 22%, #d6593a 42%, #d65b8f 62%, #7f71d6 80%, #3f84d4); color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35); padding: 0 20px; font-weight: 700; }
+.brick-cloud:hover { background: linear-gradient(100deg, #78b65c, #e3b33a 22%, #e0653f 42%, #e8689a 62%, #8d7fe0 80%, #4a93e0); }
+.brick-back { background: var(--paper); color: var(--ink); }
+.brick-petal::before { content: ""; display: inline-block; width: 9px; height: 6px; margin-right: 8px; border-radius: 1px; background: var(--c); vertical-align: 1px; }
+.brick-petal.on { background: var(--c); color: #111; }
+.brick-petal.on::before { background: #111; }
+.brick-toggle { height: 30px; font-size: 12.5px; font-weight: 500; color: var(--muted); }
+.brick-toggle::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 7px; border: 1px solid currentColor; border-radius: 1px; vertical-align: 0; }
+.brick-toggle.on { background: rgba(36, 55, 64, 0.94); color: var(--paper); }
+.brick-toggle.on::before { background: var(--ochre); border-color: var(--ochre); }
+
+/* Слои школы */
+.levels { position: fixed; z-index: 14; left: max(16px, env(safe-area-inset-left, 0px)); top: 50%; display: flex; flex-direction: column; gap: 3px; transform: translate(calc(-100% - 30px), -50%); transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.levels.show { transform: translate(0, -50%); }
+.levels h3 { margin: 0 0 3px; font: 700 15px var(--f-display); background: rgba(19, 33, 42, 0.88); padding: 6px 12px; border-radius: 2px; }
+.levels button { text-align: left; }
+
+.hint { position: fixed; z-index: 12; left: 50%; bottom: calc(112px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); font-size: 13px; background: rgba(19, 33, 42, 0.78); padding: 6px 12px; border-radius: 2px; transition: opacity 0.6s; pointer-events: none; white-space: nowrap; }
+.hint.gone, [data-mode="meaning"] .hint, [data-mode="graph"] .hint { opacity: 0; }
+
+/* О проекте */
+.about { position: fixed; z-index: 30; inset: 0; display: grid; place-items: center; background: rgba(8, 14, 20, 0.55); padding: 16px; }
+.about-card { position: relative; width: min(680px, 100%); max-height: calc(100vh - 32px); overflow: auto; background: var(--ink); border: 1px solid var(--line); border-radius: 3px; padding: 28px 30px; }
+.about-card h2 { font: 700 34px/1.05 var(--f-display); margin: 0 0 10px; text-wrap: balance; }
+.about-card p { margin: 0 0 12px; max-width: 62ch; }
+.about-card h3 { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 18px 0 8px; }
+.about-card ol { margin: 0; padding-left: 20px; }
+.about-card li { margin-bottom: 5px; }
+.levels-legend { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; }
+.levels-legend div { background: var(--ink-2); padding: 10px 12px; border-radius: 2px; font-size: 13px; min-width: 0; }
+.levels-legend b { display: block; font: 600 16px var(--f-display); margin-bottom: 3px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px; }
+.credits { font-size: 12px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 12px; margin-top: 16px; }
+#about-close { position: absolute; top: 12px; right: 12px; }
+
+/* Загрузка */
+.loader { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; background: radial-gradient(ellipse at 50% 60%, #2a3d45, #13212a 70%); transition: opacity 0.8s; }
+.loader.done { opacity: 0; pointer-events: none; }
+.loader-box { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 16px; text-align: center; }
+.loader h1 { font: 700 40px/1 var(--f-display); margin: 0; }
+.loader p { margin: 0; color: var(--muted); font-size: 13px; letter-spacing: 0.04em; }
+.lbs { display: flex; gap: 3px; }
+.lb { width: 34px; height: 12px; border-radius: 1px; background: rgba(243, 234, 216, 0.1); transition: background 0.4s; }
+.lb.on:nth-child(1) { background: #7cb35a; } .lb.on:nth-child(2) { background: #e3b52f; } .lb.on:nth-child(3) { background: #2fb3a0; } .lb.on:nth-child(4) { background: #e0653f; }
+.lb.on:nth-child(5) { background: #ee8f3a; } .lb.on:nth-child(6) { background: #8d7fe0; } .lb.on:nth-child(7) { background: #e8689a; } .lb.on:nth-child(8) { background: #4a93e0; }
+
+@media (max-width: 760px) {
+  .mark-name { font-size: 20px; }
+  .mark-sub { font-size: 10.5px; }
+  .crumbs { display: none; }
+  .ghost { padding: 7px 10px; font-size: 12px; }
+  .panel { top: auto; left: 8px; right: 8px; width: auto; max-width: none; height: 54vh; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); transform: translateY(calc(100% + 120px)); }
+  .dock { left: 8px; right: 8px; transform: none; max-width: none; }
+  .course.offset { padding-left: 24px; }
+  .brick { height: 34px; padding: 0 12px; font-size: 12.5px; }
+  .brick-toggle { height: 28px; }
+  .geo { display: none; }
+  .levels-legend { grid-template-columns: 1fr; }
+  .about-card { padding: 22px 18px; }
+  .hint { white-space: normal; width: calc(100vw - 48px); text-align: center; }
+  .pl-title { font-size: 17px; }
+  .petal-label { width: 150px; margin-left: -75px; }
+}
+</style>
+
+<div class="vignette" aria-hidden="true"></div>
+<canvas id="view" aria-label="Трёхмерная модель участка школы и окрестностей"></canvas>
+<svg id="graph" aria-label="Граф связей между смыслами"></svg>
+<div id="labels"></div>
+
+<header class="top">
+  <div class="left">
+    <div class="mark"><span class="mark-name">Верхние Термы</span><span class="mark-sub">Школа развития сельских территорий</span></div>
+    <nav class="crumbs" id="crumbs" aria-label="Где вы"></nav>
+  </div>
+  <div class="right">
+    <button class="ghost" id="about-btn" type="button">О проекте</button>
+  </div>
+</header>
+
+<div class="geo">54,6088° с. ш. · 55,1848° в. д. · 168 м над морем · Чишминский район</div>
+<div class="hint" id="hint">Тяните мышью, чтобы двигаться по карте. Правая кнопка поворачивает, колесо приближает. Нажмите на облако над школой.</div>
+
+<div class="levels" id="levels" aria-label="Слои школы">
+  <h3>Школа</h3>
+  <button class="brick on" data-level="0" type="button">Снаружи</button>
+  <button class="brick" data-level="1" type="button">Без крыши</button>
+  <button class="brick" data-level="2" type="button">Первый этаж</button>
+</div>
+
+<aside class="panel" id="panel" aria-live="polite">
+  <button id="panel-close" type="button" aria-label="Закрыть">×</button>
+  <div id="panel-body"></div>
+</aside>
+
+<div class="dock" id="dock">
+  <div class="course" id="stops"></div>
+  <div class="course offset" id="layers"></div>
+</div>
+
+<div class="about" id="about" hidden>
+  <div class="about-card" role="dialog" aria-labelledby="about-title">
+    <button class="ghost" id="about-close" type="button">Закрыть</button>
+    <h2 id="about-title">Школа развития сельских территорий</h2>
+    <p id="about-lead"></p>
+    <h3>Как это работает</h3>
+    <ol id="about-steps"></ol>
+    <h3>Как устроена страница</h3>
+    <div class="levels-legend">
+      <div><b>Земля</b>Участок школы, деревня Верхние Термы и Тура-хан в 2,2 км. Рельеф настоящий.</div>
+      <div><b>Школа</b>Снимите крышу и загляните в залы, лектории и мастерские.</div>
+      <div><b>Облако смыслов</b>Ромашка из восьми лепестков и граф связей между ними.</div>
+    </div>
+    <h3>Статусы в карточках и на графе</h3>
+    <div class="legend"><span class="st st-fact">Есть</span><span class="st st-work">Строится</span><span class="st st-plan">В планах</span><span class="st st-idea">Идея проекта</span><span class="st st-check">Уточняем</span></div>
+    <p class="credits">Прототип для обсуждения. Положение и форма новых объектов условные, тексты на проверку.<br>Рельеф: Copernicus DEM GLO-30. Карта: © участники OpenStreetMap. Кадры помещений: концепт-визуализация проекта.</p>
+  </div>
+</div>
+
+<div class="loader" id="loader">
+  <div class="loader-box">
+    <h1>Верхние Термы</h1>
+    <div class="lbs"><span class="lb"></span><span class="lb"></span><span class="lb"></span><span class="lb"></span><span class="lb"></span><span class="lb"></span><span class="lb"></span><span class="lb"></span></div>
+    <p id="loader-text">Загружаем модель</p>
+  </div>
+</div>
+
+<script type="module" src="app.js"></script>
